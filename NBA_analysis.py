@@ -40,6 +40,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 import seaborn as sns
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 
 
 nba = 'połączony_nba.csv'
@@ -210,26 +212,55 @@ data_pos1.drop(columns=['FG%','2P%','eFG%','FT%','Sezon','MVP'], inplace=True)
 data_pos2.drop(columns=['FG%','2P%','eFG%','FT%','Sezon','MVP'], inplace=True)
 
 ###########PODZIAŁ NA ZBIÓR TRENINGOWY I TESTOWY##########
-X_train_pos0 = data_pos0.iloc[:,:-1]
+X_train_pos0 = data_pos0.iloc[:,1:-1]
 y_train_pos0 = data_pos0.iloc[:,-1]
-X_test_pos0 = data_pos0_2023.iloc[:,:-1]
+X_test_pos0 = data_pos0_2023.iloc[:,1:-1]
 y_test_pos0 = data_pos0_2023.iloc[:,-1]
 
-X_train_pos1 = data_pos1.iloc[:,:-1]
+X_train_pos1 = data_pos1.iloc[:,1:-1]
 y_train_pos1 = data_pos1.iloc[:,-1]
-X_test_pos1 = data_pos1_2023.iloc[:,:-1]
+X_test_pos1 = data_pos1_2023.iloc[:,1:-1]
 y_test_pos1 = data_pos1_2023.iloc[:,-1]
 
-X_train_pos2 = data_pos2.iloc[:,:-1]
+X_train_pos2 = data_pos2.iloc[:,1:-1]
 y_train_pos2 = data_pos2.iloc[:,-1]
-X_test_pos2 = data_pos2_2023.iloc[:,:-1]
+X_test_pos2 = data_pos2_2023.iloc[:,1:-1]
 y_test_pos2 = data_pos2_2023.iloc[:,-1]
 
+##########USUNIĘCIE NAN##########
+nan_indices_train = y_train_pos0[X_train_pos0.isna().any(axis=1)].index
+X_train_pos0 = X_train_pos0.dropna()
+y_train_pos0 = y_train_pos0.drop(index=nan_indices_train)
+
+##########REGRESJA LOGISTYCZNA##########
+model = LogisticRegression(random_state=0)
+model.fit(X_train_pos0, y_train_pos0)
+y_pred = model.predict(X_test_pos0)
+selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
+selected_players = data_pos0_2023.iloc[selected_indices]['Player']
+print("Zawodnicy dopasowani do kategorii 1, 2 lub 3: ")
+print(selected_players)
 
 
+model = LogisticRegression(random_state=0)
+model.fit(X_train_pos1, y_train_pos1)
+y_pred = model.predict(X_test_pos1)
+selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
+selected_players = data_pos1_2023.iloc[selected_indices]['Player']
+print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
+print(selected_players)
 
 
+model = LogisticRegression(random_state=0)
+model.fit(X_train_pos2, y_train_pos2)
+y_pred = model.predict(X_test_pos2)
+selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
+selected_players = data_pos2_2023.iloc[selected_indices]['Player']
+print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
+print(selected_players)
 
+
+# Dokładość Modelu 87%
 
 
 
