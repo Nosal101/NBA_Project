@@ -42,6 +42,16 @@ import seaborn as sns
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
+
+
+
 
 
 nba = 'połączony_nba.csv'
@@ -232,237 +242,92 @@ nan_indices_train = y_train_pos0[X_train_pos0.isna().any(axis=1)].index
 X_train_pos0 = X_train_pos0.dropna()
 y_train_pos0 = y_train_pos0.drop(index=nan_indices_train)
 
-##########REGRESJA LOGISTYCZNA##########
-model = LogisticRegression(random_state=0)
-model.fit(X_train_pos0, y_train_pos0)
-y_pred = model.predict(X_test_pos0)
-selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
-selected_players = data_pos0_2023.iloc[selected_indices]['Player']
-print("Zawodnicy dopasowani do kategorii 1, 2 lub 3: ")
-print(selected_players)
+#########################################################
+########## TESTOWANIE MODELU DLA DRUŻYNY  ROKU ##########
+#########################################################
+
+##########MODELE##########
+models = [
+    LogisticRegression(random_state=0),
+    KNeighborsClassifier(n_neighbors=8,weights = "uniform"),
+    DecisionTreeClassifier(random_state=0),
+    RandomForestClassifier(n_estimators=100, random_state=0),
+    GradientBoostingClassifier(random_state=0, n_estimators=100,learning_rate = 0.1),
+    AdaBoostClassifier(random_state=0),
+    SVC(kernel='linear'),
+    GaussianNB(),
+    MLPClassifier(random_state=0, max_iter=1000)
+]
+
+##########PREDYKCJA##########
+def evaluate_model(model, X_train, y_train, X_test, data_2023):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
+    selected_players = data_2023.iloc[selected_indices]['Player']
+    #print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
+    #print(selected_players)
+    return selected_players
+
+##########LICZBA WYSTĄPIEŃ DLA KAŻDEGO ZAWODNIKA##########
+player_counts0 = {}
+player_counts1 = {}
+player_counts2 = {}
+
+def player_count(data_pos_2023, X_train_pos, y_train_pos, X_test_pos, player_counts):
+    for model in models:
+        selected_players = evaluate_model(model, X_train_pos, y_train_pos, X_test_pos, data_pos_2023)
+        for player in selected_players:
+            if player in player_counts:
+                player_counts[player] += 1
+            else:
+                player_counts[player] = 1
+    #print("\nLiczba wystąpień dla każdego zawodnika:")
+    #for player, count in player_counts.items():
+    #    print(f"{player}: {count}"
+
+player_count(data_pos0_2023, X_train_pos0, y_train_pos0, X_test_pos0, player_counts0)
+player_count(data_pos1_2023, X_train_pos1, y_train_pos1, X_test_pos1, player_counts1)
+player_count(data_pos2_2023, X_train_pos2, y_train_pos2, X_test_pos2, player_counts2)
+
+##########PODZIAŁ NA ZESPOŁY##########
+team1 =[]
+team2 =[]
+team3 =[]
+
+def add_to_group(player_counts, quantity):
+    sorted_players = sorted(player_counts.items(), key=lambda x: x[1], reverse=True)
+    if quantity == 1:
+        team1.append(sorted_players[0])
+        team2.append(sorted_players[1])
+        team3.append(sorted_players[2])
+    if quantity == 2:
+        team1.append(sorted_players[0])
+        team1.append(sorted_players[1])
+        team2.append(sorted_players[2])
+        team2.append(sorted_players[3])
+        team3.append(sorted_players[4])
+        team3.append(sorted_players[5])
+
+add_to_group(player_counts0, 1)
+add_to_group(player_counts1, 2)
+add_to_group(player_counts2, 2)
+
+print('Zespół 1')  #Wszyscy prawidłowo 100%
+print(team1)
+print('Zespół 2')  #2 prawidłowo, 2 powinno być w zespole 3, 1 źle
+print(team2)
+print('Zespół 3')  #2 prawidłowo, 1 powinno być w zespole 2, 2 źle
+print(team3)
 
 
-model = LogisticRegression(random_state=0)
-model.fit(X_train_pos1, y_train_pos1)
-y_pred = model.predict(X_test_pos1)
-selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
-selected_players = data_pos1_2023.iloc[selected_indices]['Player']
-print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
-print(selected_players)
 
 
-model = LogisticRegression(random_state=0)
-model.fit(X_train_pos2, y_train_pos2)
-y_pred = model.predict(X_test_pos2)
-selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
-selected_players = data_pos2_2023.iloc[selected_indices]['Player']
-print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
-print(selected_players)
 
 
-# Dokładość Modelu 87%
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def calculate_mean_stats(filtered_data):
-#     all_stars_mean_stats = {}
-#     grouped_data = filtered_data.groupby('All_stars')
-#     for all_stars_value, group_data in grouped_data:
-#         mean_stats = group_data.drop(['Player', 'All_stars','MVP'], axis=1).mean()
-#         all_stars_mean_stats[all_stars_value] = mean_stats
-#     return all_stars_mean_stats
-
-# mean_data0 = calculate_mean_stats(filtered_data0)[1]
-# mean_data1 = calculate_mean_stats(filtered_data1)[1]
-# mean_data2 = calculate_mean_stats(filtered_data2)[1]
-
-#print(mean_data0.shape[0])
-#print(data_pos0_2023)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def calculate_total_deviation(data_2023, mean_data):
-#     total_deviations = []
-#     for idx, row in data_2023.iterrows():
-#         player_name = row['Player']
-#         player_stats = row.drop(['Player'])  # Usunięcie kolumny z imieniem zawodnika i rokiem
-#         total_deviation = np.abs(player_stats - mean_data).sum()  # Obliczanie łącznego odchylenia
-#         total_deviations.append((player_name, total_deviation))
-#     return total_deviations
-
-# total_deviations_2023 = calculate_total_deviation(data_pos0_2023, mean_data0)
-# sorted_deviations = sorted(total_deviations_2023, key=lambda x: x[1])
-# # Wyświetlenie trzech zawodników z najmniejszymi różnicami
-# print("Trzy zawodniki z najmniejszymi różnicami od średnich statystyk:")
-# for player, deviation in sorted_deviations[:3]:
-#     print(f"{player}: {deviation}")
-
-
-# total_deviations_2023 = calculate_total_deviation(data_pos1_2023, mean_data1)
-# sorted_deviations = sorted(total_deviations_2023, key=lambda x: x[1])
-# # Wyświetlenie trzech zawodników z najmniejszymi różnicami
-# print("Trzy zawodniki z najmniejszymi różnicami od średnich statystyk:")
-# for player, deviation in sorted_deviations[:6]:
-#     print(f"{player}: {deviation}")
-
-
-# total_deviations_2023 = calculate_total_deviation(data_pos2_2023, mean_data2)
-# sorted_deviations = sorted(total_deviations_2023, key=lambda x: x[1])
-# # Wyświetlenie trzech zawodników z najmniejszymi różnicami
-# print("Trzy zawodniki z najmniejszymi różnicami od średnich statystyk:")
-# for player, deviation in sorted_deviations[:6]:
-#     print(f"{player}: {deviation}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-######################################################3
-# import pandas as pd
-# from sklearn.model_selection import train_test_split
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.metrics import classification_report
-
-# names = data['Player']
-# data = data.drop(['Player', 'Age', 'Tm', '2P%', '3P%'], axis=1)
-
-# #Podział na Centrów Obrońców Skrzydłowych
-# data_pos0 = data[data['Pos'] == 0]
-# data_pos1 = data[data['Pos'] == 1]
-# data_pos2 = data[data['Pos'] == 2]
-
-# # Podział danych na zestaw treningowy i testowy
-# train_data_pos0 = data_pos0[data_pos0['Sezon'].isin(range(2016, 2023))]
-# test_data_pos0 = data_pos0[data_pos0['Sezon'] == 2023]
-
-# train_data_pos1 = data_pos1[data_pos1['Sezon'].isin(range(2016, 2023))]
-# test_data_pos1 = data_pos1[data_pos1['Sezon'] == 2023]  
-
-# train_data_pos2 = data_pos2[data_pos2['Sezon'].isin(range(2016, 2023))]
-# test_data_pos2 = data_pos2[data_pos2['Sezon'] == 2023]
-
-
-# X_train_pos0 = train_data_pos0.drop('All_stars', axis=1)
-# y_train_pos0 = train_data_pos0['All_stars']
-# X_test_pos0 = test_data_pos0.drop('All_stars', axis=1)
-# y_test_pos0 = test_data_pos0['All_stars']
-
-# X_train_pos1 = train_data_pos1.drop('All_stars', axis=1)
-# y_train_pos1 = train_data_pos1['All_stars']
-# X_test_pos1 = test_data_pos1.drop('All_stars', axis=1)
-# y_test_pos1 = test_data_pos1['All_stars']
-
-# X_train_pos2 = train_data_pos2.drop('All_stars', axis=1)
-# y_train_pos2 = train_data_pos2['All_stars']
-# X_test_pos2 = test_data_pos2.drop('All_stars', axis=1)
-# y_test_pos2 = test_data_pos2['All_stars']
-
-# # Inicjalizacja i trening modelu
-# clf0 = RandomForestClassifier()
-# clf0.fit(X_train_pos0, y_train_pos0)
-
-# clf1 = RandomForestClassifier()
-# clf1.fit(X_train_pos1, y_train_pos1)
-
-# clf2 = RandomForestClassifier()
-# clf2.fit(X_train_pos2, y_train_pos2)
-
-# # Predykcja na danych testowych
-# y_pred0 = clf0.predict(X_test_pos0)
-# y_pred1 = clf1.predict(X_test_pos1)
-# y_pred2 = clf2.predict(X_test_pos2)
-
-# #Wynik
-# selected_players_indices0 = test_data_pos0.index[y_pred0 != 0][:5]
-# selected_players0 = names.loc[selected_players_indices0]
-# print(selected_players0)
-
-# selected_players_indices1 = test_data_pos1.index[y_pred1 != 0][:5]
-# selected_players1 = names.loc[selected_players_indices1]
-# print(selected_players1)
-
-# selected_players_indices2 = test_data_pos2.index[y_pred2 != 0][:5]
-# selected_players2 = names.loc[selected_players_indices2]
-# print(selected_players2)
 
