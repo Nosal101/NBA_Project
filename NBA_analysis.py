@@ -51,9 +51,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 
 
-
-
-
 nba = 'połączony_nba.csv'
 data = pd.read_csv(nba)
 
@@ -171,14 +168,6 @@ data_pos2 = data[data['Pos'] == 2]
 data_pos0_2023 = data_2023[data_2023['Pos'] == 0]
 data_pos1_2023 = data_2023[data_2023['Pos'] == 1]
 data_pos2_2023 = data_2023[data_2023['Pos'] == 2]
-
-data_pos0_2023_copy = data_pos0_2023.copy()
-data_pos1_2023_copy = data_pos1_2023.copy()
-data_pos2_2023_copy = data_pos2_2023.copy()
-
-data_pos0_2023_copy.drop(columns=['Sezon','All_stars','MVP'], inplace=True)
-data_pos1_2023_copy.drop(columns=['Sezon','All_stars','MVP'], inplace=True)
-data_pos2_2023_copy.drop(columns=['Sezon','All_stars','MVP'], inplace=True)
 
 ##########FILTRACJA DLA POZYCJI##########
 filtered_data0 = data_pos0[(data_pos0['All_stars'].isin([0, 1, 2, 3]))]
@@ -321,13 +310,122 @@ print('Zespół 3')  #2 prawidłowo, 1 powinno być w zespole 2, 2 źle
 print(team3)
 
 
+###############################################
+########## TESTOWANIE MODELU DLA MVP ##########
+###############################################
 
+##########PRZYGOTOWANIE DANYCH##########
+data_copy = data.copy()
+data_2023_copy = data_2023.copy()
 
+data_copy.drop(columns=['Sezon','MVP','FG%','2P%','eFG%','FT%','PF'], inplace=True)
+data_2023_copy.drop(columns=['Sezon','MVP','FG%','2P%','eFG%','FT%','PF'], inplace=True)
 
+X_train_data = data_copy.iloc[:,1:-1]
+y_train_data = data_copy.iloc[:,-1]
+X_test_data_2023 = data_2023_copy.iloc[:,1:-1]
+y_test_data_2023 = data_2023_copy.iloc[:,-1]
 
+nan_indices_train = y_train_data[X_train_data.isna().any(axis=1)].index
+X_train_data = X_train_data.dropna()
+y_train_data = y_train_data.drop(index=nan_indices_train)
 
+nan_indices_train = y_test_data_2023[X_test_data_2023.isna().any(axis=1)].index
+X_test_data_2023 = X_test_data_2023.dropna()
+y_test_data_2023 = y_test_data_2023.drop(index=nan_indices_train)
 
+##########MODELE##########
+models = [
+    LogisticRegression(random_state=0),
+    KNeighborsClassifier(n_neighbors=8,weights = "uniform"),
+    DecisionTreeClassifier(random_state=0),
+    RandomForestClassifier(n_estimators=100, random_state=0),
+    GradientBoostingClassifier(random_state=0, n_estimators=100,learning_rate = 0.1),
+    AdaBoostClassifier(random_state=0),
+    SVC(kernel='linear'),
+    GaussianNB(),
+    MLPClassifier(random_state=0, max_iter=1000)
+]
 
+##########PREDYKCJA##########
+def evaluate_model(model, X_train, y_train, X_test, data_2023):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    selected_indices = np.where((y_pred == 1) | (y_pred == 2) | (y_pred == 3))[0]
+    selected_players = data_2023.iloc[selected_indices]['Player']
+    #print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
+    #print(selected_players)
+    return selected_players
 
+##########LICZBA WYSTĄPIEŃ DLA KAŻDEGO ZAWODNIKA##########
+player_counts = {}
 
+def player_count(data_pos_2023, X_train_pos, y_train_pos, X_test_pos, player_counts):
+    for model in models:
+        selected_players = evaluate_model(model, X_train_pos, y_train_pos, X_test_pos, data_pos_2023)
+        for player in selected_players:
+            if player in player_counts:
+                player_counts[player] += 1
+            else:
+                player_counts[player] = 1
+    #print("\nLiczba wystąpień dla każdego zawodnika:")
+    #for player, count in player_counts.items():
+    #    print(f"{player}: {count}"
 
+player_count(data_2023_copy, X_train_data, y_train_data, X_test_data_2023, player_counts)
+
+##########WYBRANIE ZAWODNIKÓW KTÓRZY POWINNI OTRZYMAĆ NAGRODĘ MVP##########
+MVP_avard = []
+for player, count in player_counts.items():
+    if count == 9:
+        MVP_avard.append(player)
+
+##########WYKRESY DLA ZAWODNIKÓW MVP##########
+selected_players_data = data_2023_copy[data_2023_copy['Player'].isin(MVP_avard)]
+selected_players_data = pd.DataFrame(selected_players_data)
+
+def player_stats_plot(selected_players_data):
+    plt.figure(figsize=(12, 8))
+    for idx, row in selected_players_data.iterrows():
+        player_name = row['Player']
+        player_data = row.drop(['Player', 'Pos', 'All_stars'])
+        plt.plot(player_data, marker='o', label=player_name)
+    plt.title('Statystyki dla wybranych zawodników')
+    plt.xlabel('Indeks')
+    plt.ylabel('Wartość')
+    plt.xticks(rotation=45)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1))
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+#player_stats_plot(selected_players_data)
+
+##########ŚREDNIE STATYSTYKI DLA ZAWODNIKÓW MVP##########
+mean_pos_0 = data_2023[data_2023['Pos'] == 0]
+mean_pos_0 = mean_pos_0.drop(columns=['Player','Sezon','MVP','FG%','2P%','eFG%','FT%','PF','Pos', 'All_stars'])
+mean_pos_0 = mean_pos_0.mean()
+
+mean_pos_1 = data_2023[data_2023['Pos'] == 1]
+mean_pos_1 = mean_pos_1.drop(columns=['Player','Sezon','MVP','FG%','2P%','eFG%','FT%','PF','Pos', 'All_stars'])
+mean_pos_1 = mean_pos_1.mean()
+
+mean_pos_2 = data_2023[data_2023['Pos'] == 2]
+mean_pos_2 = mean_pos_2.drop(columns=['Player','Sezon','MVP','FG%','2P%','eFG%','FT%','PF','Pos', 'All_stars'])
+mean_pos_2 = mean_pos_2.mean()
+
+selected_players_data_pos_0 = selected_players_data[selected_players_data['Pos'] == 0]
+selected_players_data_pos_1 = selected_players_data[selected_players_data['Pos'] == 1]
+selected_players_data_pos_2 = selected_players_data[selected_players_data['Pos'] == 2]
+
+##########WYBÓR MVP##########
+diff_pos_0 = selected_players_data_pos_0.drop(columns=['Player', 'Pos', 'All_stars']).sub(mean_pos_0)
+diff_pos_1 = selected_players_data_pos_1.drop(columns=['Player', 'Pos', 'All_stars']).sub(mean_pos_1)
+diff_pos_2 = selected_players_data_pos_2.drop(columns=['Player', 'Pos', 'All_stars']).sub(mean_pos_2)
+
+all_diff = pd.concat([diff_pos_0, diff_pos_1, diff_pos_2])
+sum_diff_all = all_diff.sum(axis=1)
+max_diff_index = sum_diff_all.idxmax()
+max_diff_player_name = selected_players_data.loc[max_diff_index, 'Player']
+
+print("MVP to: ", max_diff_player_name)
