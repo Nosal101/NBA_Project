@@ -429,3 +429,38 @@ max_diff_index = sum_diff_all.idxmax()
 max_diff_player_name = selected_players_data.loc[max_diff_index, 'Player']
 
 print("MVP to: ", max_diff_player_name)
+
+
+#########################################
+########## WIZUALIZACJA DANYCH ##########
+#########################################
+plt.figure(figsize=(12, 6))
+
+# Zespół 1
+plt.subplot(1, 3, 1)
+plt.title('Zespół 1')
+plt.gca().axes.get_yaxis().set_visible(False) # Ukrycie osi Y
+for i, (player, _) in enumerate(team1):
+    if player == max_diff_player_name:
+        plt.text(0.5, 0.95 - i*0.1, player, ha='center', color='red')
+    else:
+        plt.text(0.5, 0.95 - i*0.1, player, ha='center')
+
+# Zespół 2
+plt.subplot(1, 3, 2)
+plt.title('Zespół 2')
+plt.gca().axes.get_yaxis().set_visible(False) # Ukrycie osi Y
+for i, (player, _) in enumerate(team2):
+    plt.text(0.5, 0.95 - i*0.1, player, ha='center')
+
+# Zespół 3
+plt.subplot(1, 3, 3)
+plt.title('Zespół 3')
+plt.gca().axes.get_yaxis().set_visible(False) # Ukrycie osi Y
+for i, (player, _) in enumerate(team3):
+    plt.text(0.5, 0.95 - i*0.1, player, ha='center')
+
+plt.tight_layout()
+plt.show()
+
+
