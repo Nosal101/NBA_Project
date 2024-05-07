@@ -85,4 +85,19 @@ add_all_stars_column(nba21, Rookies_21_1, Rookies_21_2)
 add_all_stars_column(nba22, Rookies_22_1, Rookies_22_2)
 add_all_stars_column(nba23, Rookies_23_1, Rookies_23_2)
 
-count_all_stars(nba23, 'nba18')
+########DODANIE KOLUMNY SEZON##########
+nba16['Sezon'] = 2016
+nba17['Sezon'] = 2017
+nba18['Sezon'] = 2018
+nba19['Sezon'] = 2019
+nba20['Sezon'] = 2020
+nba21['Sezon'] = 2021
+nba22['Sezon'] = 2022
+nba23['Sezon'] = 2023
+nba24['Sezon'] = 2024
+
+########SCALANIE DANYCH##########
+nba = pd.concat([nba16, nba17, nba18, nba19, nba20, nba21, nba22, nba23])
+
+########ZAPIS DO PLIKU##########
+nba.to_csv('połączony_rookie_nba.csv', index=False)
