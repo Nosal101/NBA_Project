@@ -147,7 +147,7 @@ remove_rows(data, '3P%')
 
 #########PODZIAŁ NA SEZONY##########
 data_2023 = data[data['Sezon'] == 2023]
-data = data[data['Sezon'] != 2023]
+data = data[(data['Sezon'] != 2023) & (data['Sezon'] != 2024)]
 
 ###########WYRZUCENIE KOLUMNY SEZON##########
 data_2023.drop(columns=['Sezon'], inplace=True)

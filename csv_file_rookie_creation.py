@@ -98,7 +98,7 @@ nba23['Sezon'] = 2023
 nba24['Sezon'] = 2024
 
 ########SCALANIE DANYCH##########
-nba = pd.concat([nba16, nba17, nba18, nba19, nba20, nba21, nba22, nba23])
+nba = pd.concat([nba16, nba17, nba18, nba19, nba20, nba21, nba22, nba23,nba24])
 
 print(nba24)
 print(nba22)

@@ -144,7 +144,7 @@ one_hot_encoding(data,'Pos')
 
 #########PODZIAŁ NA SEZONY##########
 data_2023 = data[data['Sezon'] == 2023]
-data = data[data['Sezon'] != 2023]
+data = data[(data['Sezon'] != 2023) & (data['Sezon'] != 2024)]
 
 ##########WYKRESY PUDEŁKOWE DLA POZYCJI###########
 def box_plot(data):
