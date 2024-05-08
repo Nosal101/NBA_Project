@@ -104,6 +104,7 @@ add_all_stars_column(nba20,All_stars20_1,All_stars20_2,All_stars20_3)
 add_all_stars_column(nba21,All_stars21_1,All_stars21_2,All_stars21_3)
 add_all_stars_column(nba22,All_stars22_1,All_stars22_2,All_stars22_3)
 add_all_stars_column(nba23,All_stars23_1,All_stars23_2,All_stars23_3)
+nba24['All_stars'] = 'NaN'
 
 ########DODANIE KOLUMNY MVP##########
 def add_mvp_column(df,mvp):
@@ -127,6 +128,7 @@ add_mvp_column(nba20,MVP20)
 add_mvp_column(nba21,MVP21)
 add_mvp_column(nba22,MVP22)
 add_mvp_column(nba23,MVP23)
+nba24['MVP'] = 'NaN'
 
 ########DODANIE KOLUMNY SEZON##########
 nba16['Sezon'] = 2016

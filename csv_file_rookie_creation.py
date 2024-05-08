@@ -84,6 +84,7 @@ add_all_stars_column(nba20, Rookies_20_1, Rookies_20_2)
 add_all_stars_column(nba21, Rookies_21_1, Rookies_21_2)
 add_all_stars_column(nba22, Rookies_22_1, Rookies_22_2)
 add_all_stars_column(nba23, Rookies_23_1, Rookies_23_2)
+nba24['All_stars'] = 'NaN'
 
 ########DODANIE KOLUMNY SEZON##########
 nba16['Sezon'] = 2016
@@ -99,5 +100,7 @@ nba24['Sezon'] = 2024
 ########SCALANIE DANYCH##########
 nba = pd.concat([nba16, nba17, nba18, nba19, nba20, nba21, nba22, nba23])
 
+print(nba24)
+print(nba22)
 ########ZAPIS DO PLIKU##########
 nba.to_csv('połączony_rookie_nba.csv', index=False)
