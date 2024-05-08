@@ -135,6 +135,120 @@ def corr_map(df):
     plt.title('Spearman Correlation Heatmap')
     plt.show()
 
-corr_map(data)
+#corr_map(data)
+
+#########USUNIĘCIE WIERSZÓW Z KORELACJĄ PONIŻEJ 0.15##########
+def remove_rows(df, column_name):
+    df.drop(columns=[column_name], inplace=True)
+remove_rows(data, 'FG%')
+remove_rows(data, 'FT%')
+remove_rows(data, '3P%')
 
 
+#########PODZIAŁ NA SEZONY##########
+data_2023 = data[data['Sezon'] == 2023]
+data = data[data['Sezon'] != 2023]
+
+###########WYRZUCENIE KOLUMNY SEZON##########
+data_2023.drop(columns=['Sezon'], inplace=True)
+data.drop(columns=['Sezon'], inplace=True)
+
+###########PODZIAŁ NA ZBIÓR TRENINGOWY I TESTOWY##########
+X_train = data.iloc[:,1:-1]
+y_train = data.iloc[:,-1]
+X_test = data_2023.iloc[:,1:-1]
+y_test = data_2023.iloc[:,-1]
+
+#########################################################
+########## TESTOWANIE MODELU DLA DRUŻYNY  ROKU ##########
+#########################################################
+
+##########MODELE##########
+models = [
+    LogisticRegression(random_state=0),
+    KNeighborsClassifier(n_neighbors=8,weights = "uniform"),
+    DecisionTreeClassifier(random_state=0),
+    RandomForestClassifier(n_estimators=100, random_state=0),
+    GradientBoostingClassifier(random_state=0, n_estimators=100,learning_rate = 0.1),
+    AdaBoostClassifier(random_state=0),
+    SVC(kernel='linear'),
+    GaussianNB(),
+    MLPClassifier(random_state=0, max_iter=1000)
+]
+
+##########PREDYKCJA##########
+def evaluate_model(model, X_train, y_train, X_test, data_2023):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    selected_indices = np.where((y_pred == 1) | (y_pred == 2))[0]
+    selected_players = data_2023.iloc[selected_indices]['PLAYER']
+    #print("Zawodnicy dopasowani do kategorii 1, 2 lub 3:")
+    #print(selected_players)
+    return selected_players
+
+##########LICZBA WYSTĄPIEŃ DLA KAŻDEGO ZAWODNIKA##########
+player_counts = {}
+
+def player_count(data_2023, X_train, y_train, X_test, player_counts):
+    for model in models:
+        selected_players = evaluate_model(model, X_train, y_train, X_test, data_2023)
+        for player in selected_players:
+            if player in player_counts:
+                player_counts[player] += 1
+            else:
+                player_counts[player] = 1
+    #print("\nLiczba wystąpień dla każdego zawodnika:")
+    #for player, count in player_counts.items():
+        #print(f"{player}: {count}")
+
+player_count(data_2023, X_train, y_train, X_test, player_counts)
+
+##########PODZIAŁ NA ZESPOŁY##########
+team1 =[]
+team2 =[]
+
+def add_to_group(player_counts):
+    sorted_players = sorted(player_counts.items(), key=lambda x: x[1], reverse=True)
+    team1.append(sorted_players[0])
+    team1.append(sorted_players[1])
+    team1.append(sorted_players[2])
+    team1.append(sorted_players[3])
+    team1.append(sorted_players[4])
+    team2.append(sorted_players[5])
+    team2.append(sorted_players[6])
+    team2.append(sorted_players[7])
+    team2.append(sorted_players[8])
+    team2.append(sorted_players[9])
+
+    
+add_to_group(player_counts)
+
+print('Zespół 1')  #4 dobrze, 1 do drużyny 2
+print(team1)
+print('Zespół 2')  #2 dobrze, 1 do drużyny 1, 2 źle
+print(team2)
+
+#########################################
+########## WIZUALIZACJA DANYCH ##########
+#########################################
+plt.figure(figsize=(12, 6))
+
+# Zespół 1
+plt.subplot(1, 2, 1)
+plt.title('Zespół 1')
+plt.gca().axes.get_yaxis().set_visible(False) # Ukrycie osi Y
+for i, (player, _) in enumerate(team1):
+    if player == team1[0][0]:
+        plt.text(0.5, 0.95 - i*0.1, player, ha='center', color='red')
+    else:
+        plt.text(0.5, 0.95 - i*0.1, player, ha='center')
+
+# Zespół 2
+plt.subplot(1, 2, 2)
+plt.title('Zespół 2')
+plt.gca().axes.get_yaxis().set_visible(False) # Ukrycie osi Y
+for i, (player, _) in enumerate(team2):
+    plt.text(0.5, 0.95 - i*0.1, player, ha='center')
+
+plt.tight_layout()
+plt.show()
